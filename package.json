@@ -63,12 +63,18 @@
   },
   "dependencies": {
     "@gtriggiano/grpc-eventstore": "0.0.3",
+    "debug": "^4.1.1",
+    "eventemitter3": "^3.1.0",
+    "fp-ts": "^1.13.0",
     "grpc": "^1.18.0",
-    "lodash": "^4.17.11"
+    "io-ts": "^1.8.2",
+    "lodash": "^4.17.11",
+    "strict-event-emitter-types": "^2.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.2.0",
     "@babel/preset-env": "^7.2.0",
+    "@types/debug": "^4.1.1",
     "@types/jest": "^23.3.10",
     "babel-core": "7.0.0-bridge.0",
     "babel-jest": "^23.6.0",
