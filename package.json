@@ -1,0 +1,114 @@
+{
+  "name": "@gtriggiano/grpc-eventstore-timetraveler",
+  "description": "A module to implement CQRS projectors which consume events from grpc-eventstore",
+  "version": "0.0.0",
+  "engines": {
+    "node": ">=8.0.0"
+  },
+  "main": "dist/main/index.js",
+  "typings": "dist/main/index.d.ts",
+  "module": "dist/module/index.js",
+  "repository": "https://github.com/gtriggiano/node-grpc-eventstore-timetraveler",
+  "license": "MIT",
+  "keywords": [
+    "DDD",
+    "Event Sourcing",
+    "EventStore",
+    "CQRS",
+    "projection",
+    "read model"
+  ],
+  "scripts": {
+    "info": "npm-scripts-info",
+    "build": "run-s clean && run-p build:*",
+    "build:main": "tsc -p tsconfig.json",
+    "build:module": "tsc -p tsconfig.module.json",
+    "clean": "trash coverage dist pages",
+    "fix": "run-s fix:*",
+    "fix:prettier": "prettier \"src/**/*.ts\" --write",
+    "fix:tslint": "tslint --fix --project .",
+    "test": "run-s build test:*",
+    "test:lint": "tslint --project . && prettier \"src/**/*.ts\" --list-different",
+    "test:unit": "jest",
+    "dev": "run-s clean build:main test:unit && run-p \"build:main -- -w\" \"test:unit -- --watch\"",
+    "watch": "run-s clean \"build:main -- -w\"",
+    "cov": "npm test && opn pages/coverage/lcov-report/index.html",
+    "check:coverage": "istanbul check-coverage --statements 100 --functions 100 --branches -2 --lines 100 pages/coverage/coverage-final.json",
+    "send:coverage": "codecov -f pages/coverage/coverage-final.json -t $CODECOV_TOKEN",
+    "typedoc": "run-s typedoc:html && opn pages/typedoc/index.html",
+    "typedoc:html": "typedoc src/lib --target ES6 --mode file --out pages/typedoc",
+    "typedoc:json": "typedoc src/lib --target ES6 --mode file --json pages/typedoc/typedoc.json",
+    "gh-pages:publish": "gh-pages -m \"[ci skip] Updates\" -d pages",
+    "version": "standard-version",
+    "reset": "git clean -dfx && git reset --hard && rm -rf node_modules && npm i",
+    "all": "run-s reset test typedoc:*",
+    "commit": "git-cz",
+    "prepare-release": "run-s all version"
+  },
+  "scripts-info": {
+    "info": "Display information about the package scripts",
+    "build": "Clean and rebuild the project",
+    "fix": "Try to automatically fix any linting problems",
+    "test": "Clean and rebuild the project. Then lint and unit test the project",
+    "dev": "Watch and rebuild the project on save, then rerun tests",
+    "watch": "Watch and rebuild the project on save",
+    "cov": "Rebuild, run tests, then create and open the coverage report",
+    "typedoc": "Generate TypeDoc documentation and open it in a browser",
+    "typedoc:html": "Generate TypeDoc documentation",
+    "typedoc:json": "Generate documentation in typedoc JSON format",
+    "version": "Bump package.json version, update CHANGELOG.md, tag release",
+    "reset": "Delete all untracked files and reset the repo to the last commit",
+    "commit": "Make a new commit through commitizen",
+    "prepare-release": "One-step: clean, build, test, generate TypeDoc, and prepare a release"
+  },
+  "dependencies": {
+    "@gtriggiano/grpc-eventstore": "0.0.3",
+    "grpc": "^1.18.0",
+    "lodash": "^4.17.11"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.2.0",
+    "@babel/preset-env": "^7.2.0",
+    "@types/jest": "^23.3.10",
+    "babel-core": "7.0.0-bridge.0",
+    "babel-jest": "^23.6.0",
+    "codecov": "^3.1.0",
+    "commitizen": "^3.0.4",
+    "cz-conventional-changelog": "^2.1.0",
+    "gh-pages": "^2.0.0",
+    "istanbul": "^0.4.5",
+    "jest": "^23.6.0",
+    "jest-sourcemaps": "^1.0.1",
+    "jest-stare": "^1.8.0",
+    "npm-run-all": "^4.1.3",
+    "npm-scripts-info": "^0.3.9",
+    "opn-cli": "^3.1.0",
+    "prettier": "^1.14.3",
+    "standard-version": "^4.4.0",
+    "trash-cli": "^1.4.0",
+    "tslint": "^5.11.0",
+    "tslint-config-prettier": "^1.15.0",
+    "tslint-config-standard": "^8.0.1",
+    "tslint-immutable": "^4.7.0",
+    "typedoc": "^0.13.0",
+    "typescript": "^3.2.2",
+    "watch": "^1.0.2"
+  },
+  "config": {
+    "commitizen": {
+      "path": "cz-conventional-changelog"
+    }
+  },
+  "prettier": {
+    "printWidth": 80,
+    "semi": false,
+    "singleQuote": true,
+    "trailingComma": "es5",
+    "tabWidth": 2,
+    "useTabs": false
+  },
+  "jest-stare": {
+    "resultDir": "pages",
+    "coverageLink": "./coverage/lcov-report/index.html"
+  }
+}
