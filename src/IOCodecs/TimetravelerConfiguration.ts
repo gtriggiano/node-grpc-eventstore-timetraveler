@@ -1,11 +1,14 @@
+// tslint:disable no-submodule-imports
 import * as t from 'io-ts'
 
+import { EventProjectionHandler } from '../Queue'
 import { EventID } from './EventID'
 import { EventStoreConfig } from './EventStoreConfig'
 
 export type TimetravelerConfigurationProps = t.TypeOf<
   typeof TimetravelerConfigurationProps
 >
+
 const TimetravelerConfigurationProps = t.type(
   {
     eventStore: EventStoreConfig,
@@ -13,6 +16,10 @@ const TimetravelerConfigurationProps = t.type(
     fromEventId: EventID,
     highWaterMark: t.Int,
     lowWaterMark: t.Int,
+    name: t.string,
+    projectionHandler: (t.Function as unknown) as t.Type<
+      EventProjectionHandler
+    >,
   },
   'TimetravelerConfigurationProps'
 )

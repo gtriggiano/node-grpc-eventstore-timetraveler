@@ -7,7 +7,7 @@ import StrictEventEmitter from 'strict-event-emitter-types'
 export const Queue = ({
   highWaterMark,
   lowWaterMark,
-  onEvent,
+  eventProjection,
 }: QueueConfiguration): Queue => {
   // tslint:disable-next-line:readonly-array
   const queuedEvents: DbStoredEvent[] = []
@@ -28,7 +28,9 @@ export const Queue = ({
       return
     }
 
-    const processingResult = await Promise.resolve(onEvent(eventToProcess))
+    const processingResult = await Promise.resolve(
+      eventProjection(eventToProcess)
+    )
 
     if (processingResult.isLeft()) {
       const error = processingResult.value
@@ -109,12 +111,13 @@ interface InternalState {
   // tslint:enable readonly-keyword
 }
 
-type EventProcessingResult = Either<Error, void>
+export type EventProjectionHandler = (
+  event: DbStoredEvent
+) => EventProjectionResult | Promise<EventProjectionResult>
+export type EventProjectionResult = Either<Error, void>
 
 interface QueueConfiguration {
+  readonly eventProjection: EventProjectionHandler
   readonly highWaterMark: number
   readonly lowWaterMark: number
-  readonly onEvent: (
-    event: DbStoredEvent
-  ) => EventProcessingResult | Promise<EventProcessingResult>
 }
