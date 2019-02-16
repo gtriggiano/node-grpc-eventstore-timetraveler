@@ -1,50 +1,73 @@
 // tslint:disable no-submodule-imports
 import * as t from 'io-ts'
 
-import { EventProjectionHandler } from '../Queue'
+import {
+  EventProjectionHandler,
+  IngnoreEventProjectionHandlerErrorPredicate,
+} from '../Queue'
 import { EventID } from './EventID'
 import { EventStoreConfig } from './EventStoreConfig'
 
-export type TimetravelerConfigurationProps = t.TypeOf<
-  typeof TimetravelerConfigurationProps
->
+interface DefaultSettings {
+  readonly extractionBatchSize: number
+  readonly highWaterMark: number
+  readonly ignoreProjectionErrorPredicate: IngnoreEventProjectionHandlerErrorPredicate
+  readonly lowWaterMark: number
+}
 
-const TimetravelerConfigurationProps = t.type(
+interface SettingsToProvide {
+  readonly eventStore: EventStoreConfig
+  readonly name: string
+  readonly projectionHandler: EventProjectionHandler
+  readonly startFromEventId: EventID
+}
+
+export type TimetravelerSettings = SettingsToProvide & Partial<DefaultSettings>
+
+type Settings = DefaultSettings & SettingsToProvide
+
+const TimetravelerSettingsProps = t.type(
   {
     eventStore: EventStoreConfig,
     extractionBatchSize: t.Int,
-    fromEventId: EventID,
     highWaterMark: t.Int,
+    ignoreProjectionErrorPredicate: (t.Function as unknown) as t.Type<
+      IngnoreEventProjectionHandlerErrorPredicate
+    >,
     lowWaterMark: t.Int,
     name: t.string,
     projectionHandler: (t.Function as unknown) as t.Type<
       EventProjectionHandler
     >,
+
+    startFromEventId: EventID,
   },
-  'TimetravelerConfigurationProps'
+  'TimetravelerSettingsProps'
 )
 
-export type TimetravelerConfiguration = t.TypeOf<
-  typeof TimetravelerConfiguration
->
-export const TimetravelerConfiguration = new t.Type<
-  TimetravelerConfigurationProps
->(
-  'TimetravelerConfiguration',
-  (u): u is TimetravelerConfigurationProps => {
-    const result = TimetravelerConfigurationProps.decode(u)
+export const TimetravelerSettings = new t.Type<Settings>(
+  'TimetravelerSettings',
+  (u): u is Settings => {
+    const result = TimetravelerSettingsProps.decode(u)
     return (
       result.isRight() && result.value.highWaterMark > result.value.lowWaterMark
     )
   },
   (u, c) => {
-    const propsValidation = TimetravelerConfigurationProps.validate(u, c)
+    const propsValidation = TimetravelerSettingsProps.validate(u, c)
     return propsValidation.isLeft()
       ? propsValidation
       : propsValidation.value.highWaterMark <=
         propsValidation.value.lowWaterMark
       ? t.failure(u, c, 'highWaterMark should be >= lowWaterMark')
-      : t.success(u as TimetravelerConfigurationProps)
+      : t.success(u as Settings)
   },
   t.identity
 )
+
+export const DEFAULT_TIMETRAVELER_CONFIGURATION: DefaultSettings = {
+  extractionBatchSize: 500,
+  highWaterMark: 5000,
+  ignoreProjectionErrorPredicate: () => false,
+  lowWaterMark: 500,
+}
