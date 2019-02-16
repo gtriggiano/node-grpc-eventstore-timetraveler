@@ -7,7 +7,8 @@ import StrictEventEmitter from 'strict-event-emitter-types'
 export const Queue = ({
   highWaterMark,
   lowWaterMark,
-  eventProjection,
+  projectionHandler,
+  ignoreProjectionErrorPredicate,
 }: QueueConfiguration): Queue => {
   // tslint:disable-next-line:readonly-array
   const queuedEvents: DbStoredEvent[] = []
@@ -29,14 +30,24 @@ export const Queue = ({
     }
 
     const processingResult = await Promise.resolve(
-      eventProjection(eventToProcess)
+      projectionHandler(eventToProcess)
     )
 
     if (processingResult.isLeft()) {
       const error = processingResult.value
-      queue.emit('event-processing-error', { error, event: eventToProcess })
-      setTimeout(() => processNextEvent(), 1000)
-      return
+      const ignoreError = await Promise.resolve(
+        ignoreProjectionErrorPredicate(eventToProcess, error)
+      )
+      queue.emit('event-processing-error', {
+        error,
+        event: eventToProcess,
+        ignored: ignoreError,
+      })
+
+      if (!ignoreError) {
+        setTimeout(() => processNextEvent(), 1000)
+        return
+      }
     }
 
     const wasOverLWM = queuedEvents.length > lowWaterMark
@@ -91,6 +102,7 @@ type Emitter = StrictEventEmitter<
     readonly 'event-processing-error': {
       readonly error: Error
       readonly event: DbStoredEvent
+      readonly ignored: boolean
     }
     readonly 'processed-event': DbStoredEvent
   }
@@ -116,8 +128,14 @@ export type EventProjectionHandler = (
 ) => EventProjectionResult | Promise<EventProjectionResult>
 export type EventProjectionResult = Either<Error, void>
 
+export type IngnoreEventProjectionHandlerErrorPredicate = (
+  event: DbStoredEvent,
+  error: Error
+) => boolean | Promise<boolean>
+
 interface QueueConfiguration {
-  readonly eventProjection: EventProjectionHandler
   readonly highWaterMark: number
+  readonly ignoreProjectionErrorPredicate: IngnoreEventProjectionHandlerErrorPredicate
   readonly lowWaterMark: number
+  readonly projectionHandler: EventProjectionHandler
 }
