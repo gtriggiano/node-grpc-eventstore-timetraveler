@@ -5,6 +5,7 @@ import {
   StoredEvent,
 } from '@gtriggiano/grpc-eventstore'
 import EventEmitter from 'eventemitter3'
+import * as GRPC from 'grpc'
 import StrictEventEmitter from 'strict-event-emitter-types'
 
 import { EventID, EventStoreConfig } from './IOCodecs'
@@ -18,6 +19,7 @@ export const EventsExtractor = ({
     isExtracting: false,
     isStarted: false,
     lastExtractedEventId: '0',
+    subscription: null,
   }
 
   const getClient = () => {
@@ -29,6 +31,11 @@ export const EventsExtractor = ({
   }
 
   const closeClient = () => {
+    if (state.subscription) {
+      state.subscription.end()
+      // tslint:disable-next-line:no-object-mutation
+      state.subscription = null
+    }
     if (state.eventstoreClient) {
       state.eventstoreClient.close()
       // tslint:disable-next-line:no-object-mutation
@@ -134,6 +141,8 @@ export const EventsExtractor = ({
       }
 
       const subscription = eventstoreClient.catchUpWithStore()
+      // tslint:disable-next-line:no-object-mutation
+      state.subscription = subscription
 
       const fetchLastStoredEventInterval = setInterval(
         fetchLastStoredEvent,
@@ -218,6 +227,10 @@ interface InternalState {
   isExtracting: boolean
   isStarted: boolean
   lastExtractedEventId: EventID
+  subscription: null | GRPC.ClientDuplexStream<
+    Messages.CatchUpWithStoreRequest,
+    Messages.StoredEvent
+  >
   // tslint:enable readonly-keyword
 }
 

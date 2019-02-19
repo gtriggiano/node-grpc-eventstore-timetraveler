@@ -1,0 +1,53 @@
+<html lang="en">
+  <head>
+    <title>[[TITLE]]</title>
+    <link
+      href="https://fonts.googleapis.com/css?family=Roboto:300,400,700"
+      rel="stylesheet"
+    />
+    <link href="files/css/main.css" rel="stylesheet" />
+  </head>
+
+  <body>
+    <div id="dashboard">
+      <div id="queue">
+        <div class="mark hwm">0</div>
+        <div class="mark lwm">0</div>
+        <div class="filler">
+          <div class="size">0</div>
+        </div>
+      </div>
+
+      <div id="title">[[TITLE]]</div>
+
+      <div id="dates">
+        <div class="behind">
+          <div id="behind" class="value">-</div>
+          <div class="label">behind current state</div>
+        </div>
+        <div class="date">
+          <div class="label">Last extracted event was stored on</div>
+          <div id="leeso" class="value">-</div>
+        </div>
+        <div class="date">
+          <div class="label">Last processed event was stored on</div>
+          <div id="lpeso" class="value">-</div>
+        </div>
+      </div>
+
+      <div id="controls" class="">
+        <div class="status">stopped</div>
+        <div class="start-stop-cta">start</div>
+        <div class="live-status"><span></span> Live streaming</div>
+      </div>
+
+      <div id="processing-error" style="display: none">
+        <div class="label">Error processing an event</div>
+        <div class="text"></div>
+      </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/combine/npm/lodash@4.17.11,npm/jquery@3.3.1,npm/moment@2.24.0"></script>
+    <script src="socket.io/socket.io.js"></script>
+    <script src="files/js/app.js"></script>
+  </body>
+</html>

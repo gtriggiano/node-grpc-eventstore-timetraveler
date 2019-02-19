@@ -11,6 +11,7 @@ import {
   TimetravelerSettings,
 } from './ioCodecs'
 import { Queue } from './Queue'
+import { getUserInterface, UISetupFunction, UserInterface } from './UI'
 
 export const Timetraveler = (settings: TimetravelerSettings): Timetraveler => {
   const settingsValidation = TimetravelerSettings.decode({
@@ -140,8 +141,17 @@ export const Timetraveler = (settings: TimetravelerSettings): Timetraveler => {
     )
   })
 
+  // tslint:disable-next-line:no-let
+  let UI: UserInterface
+
   const traveler: Timetraveler = Object.assign(new EventEmitter(), {
     getState: () => cloneDeep(state),
+    getUI: (setupFunction?: UISetupFunction) => {
+      if (UI) return UI
+      UI = getUserInterface(traveler, setupFunction)
+      return UI
+    },
+    name,
     start: () =>
       state.travelling
         ? traveler
@@ -191,9 +201,11 @@ type Emitter = StrictEventEmitter<
 >
 
 export interface Timetraveler extends Emitter {
+  readonly name: string
   readonly start: () => Timetraveler
   readonly stop: () => Timetraveler
   readonly getState: () => InternalState
+  readonly getUI: (setupFunction?: UISetupFunction) => UserInterface
 }
 
 interface InternalState {
