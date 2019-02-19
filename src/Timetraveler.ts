@@ -9,7 +9,7 @@ import { EventsExtractor } from './EventsExtractor'
 import {
   DEFAULT_TIMETRAVELER_CONFIGURATION,
   TimetravelerSettings,
-} from './ioCodecs'
+} from './IOCodecs'
 import { Queue } from './Queue'
 import { getUserInterface, UISetupFunction, UserInterface } from './UI'
 
