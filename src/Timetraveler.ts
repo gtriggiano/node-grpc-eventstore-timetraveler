@@ -77,6 +77,12 @@ export const Timetraveler = (settings: TimetravelerSettings): Timetraveler => {
     emitStateUpdate()
   })
 
+  eventsExtractor.on('last-stored-event-fetched', event => {
+    // tslint:disable-next-line:no-object-mutation
+    state.events.lastInStore = essentialEvent(event)
+    emitStateUpdate()
+  })
+
   eventsExtractor.on('subscribed', () => {
     // tslint:disable-next-line:no-object-mutation
     state.subscribed = true
@@ -88,6 +94,14 @@ export const Timetraveler = (settings: TimetravelerSettings): Timetraveler => {
     state.subscribed = false
     emitStateUpdate()
   })
+
+  eventsExtractor.on('eventstore-read-error', error =>
+    traveler.emit('eventstore-read-error', error)
+  )
+
+  eventsExtractor.on('eventstore-subscription-error', error =>
+    traveler.emit('eventstore-subscription-error', error)
+  )
 
   queue.on('processed-event', event => {
     // tslint:disable no-object-mutation
@@ -171,6 +185,8 @@ type Emitter = StrictEventEmitter<
     }
     readonly 'processed-event': StoredEvent
     readonly 'state-update': InternalState
+    readonly 'eventstore-read-error': Error
+    readonly 'eventstore-subscription-error': Error
   }
 >
 

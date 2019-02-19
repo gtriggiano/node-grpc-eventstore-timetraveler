@@ -22,10 +22,9 @@ export const EventsExtractor = ({
 
   const getClient = () => {
     // tslint:disable-next-line:no-object-mutation
-    state.eventstoreClient = new EventStoreClient(
-      eventStore.address,
-      eventStore.credentials
-    )
+    state.eventstoreClient =
+      state.eventstoreClient ||
+      new EventStoreClient(eventStore.address, eventStore.credentials)
     return state.eventstoreClient
   }
 
@@ -34,7 +33,6 @@ export const EventsExtractor = ({
       state.eventstoreClient.close()
       // tslint:disable-next-line:no-object-mutation
       state.eventstoreClient = null
-      extractor.emit('unsubscribed')
     }
   }
 
@@ -43,6 +41,29 @@ export const EventsExtractor = ({
     // tslint:disable-next-line:no-object-mutation
     state.lastExtractedEventId = event.id
     extractor.emit('event-extracted', event)
+  }
+
+  const getReadStoreForwardCall = (
+    client: EventStoreClient,
+    fromEventId: EventID
+  ) => {
+    const request = new Messages.ReadStoreForwardRequest()
+    request.setFromEventId(fromEventId)
+    request.setLimit(extractionBatchSize)
+    return client.readStoreForward(request)
+  }
+
+  const fetchLastStoredEvent = () => {
+    if (!state.eventstoreClient) return
+    state.eventstoreClient.getLastEvent(
+      new Messages.Empty(),
+      (error, resultMessage) => {
+        const event = error ? undefined : resultMessage.toObject().event
+        if (event) {
+          extractor.emit('last-stored-event-fetched', event as StoredEvent)
+        }
+      }
+    )
   }
 
   const extractEvents = () => {
@@ -55,6 +76,7 @@ export const EventsExtractor = ({
 
     eventStoreClient.waitForReady(Date.now() + 3000, error => {
       if (error) {
+        extractor.emit('eventstore-connection-timeout', error)
         closeClient()
         // tslint:disable-next-line:no-object-mutation
         state.isExtracting = false
@@ -62,23 +84,23 @@ export const EventsExtractor = ({
         return
       }
 
-      const request = new Messages.ReadStoreForwardRequest()
-      request.setFromEventId(state.lastExtractedEventId)
-      request.setLimit(extractionBatchSize)
+      fetchLastStoredEvent()
 
-      const call = eventStoreClient.readStoreForward(request)
+      const readStoreForwardCall = getReadStoreForwardCall(
+        eventStoreClient,
+        state.lastExtractedEventId
+      )
 
       // tslint:disable-next-line:no-let
       let numberOfExtractedEvents = 0
 
-      call.on('data', (eventMessage: Messages.StoredEvent) => {
+      readStoreForwardCall.on('data', (eventMessage: Messages.StoredEvent) => {
         const event = eventMessage.toObject()
         numberOfExtractedEvents++
         onEventExtracted(event as StoredEvent)
       })
 
-      call.on('end', () => {
-        closeClient()
+      readStoreForwardCall.on('end', () => {
         // tslint:disable-next-line:no-object-mutation
         state.isExtracting = false
         if (numberOfExtractedEvents < extractionBatchSize) {
@@ -88,8 +110,10 @@ export const EventsExtractor = ({
         }
       })
 
-      call.on('error', () => {
-        closeClient() // tslint:disable-next-line:no-object-mutation
+      readStoreForwardCall.on('error', readError => {
+        closeClient()
+        extractor.emit('eventstore-read-error', readError)
+        // tslint:disable-next-line:no-object-mutation
         state.isExtracting = false
         setTimeout(() => extractEvents(), 1000)
       })
@@ -103,34 +127,43 @@ export const EventsExtractor = ({
 
     eventstoreClient.waitForReady(Date.now() + 3000, error => {
       if (error) {
+        extractor.emit('eventstore-connection-timeout', error)
         closeClient()
         setTimeout(() => extractEvents(), 1000)
         return
       }
 
-      const request = new Messages.CatchUpWithStoreRequest()
-      request.setFromEventId(state.lastExtractedEventId)
+      const subscription = eventstoreClient.catchUpWithStore()
 
-      const call = eventstoreClient.catchUpWithStore()
-      call.write(request)
+      const fetchLastStoredEventInterval = setInterval(
+        fetchLastStoredEvent,
+        2000
+      )
 
-      call.on('data', (eventMessage: Messages.StoredEvent) => {
+      subscription.on('data', (eventMessage: Messages.StoredEvent) => {
         const event = eventMessage.toObject()
         onEventExtracted(event as StoredEvent)
       })
 
-      call.on('error', () => {
+      subscription.on('error', subscriptionError => {
+        clearInterval(fetchLastStoredEventInterval)
+        closeClient()
+        extractor.emit('eventstore-subscription-error', subscriptionError)
+        extractor.emit('unsubscribed')
+        setTimeout(() => extractEvents(), 1000)
+      })
+
+      subscription.on('end', () => {
+        clearInterval(fetchLastStoredEventInterval)
         closeClient()
         extractor.emit('unsubscribed')
         setTimeout(() => extractEvents(), 1000)
       })
 
-      call.on('end', () => {
-        closeClient()
-        extractor.emit('unsubscribed')
-        setTimeout(() => extractEvents(), 1000)
-      })
+      const startMessage = new Messages.CatchUpWithStoreRequest()
+      startMessage.setFromEventId(state.lastExtractedEventId)
 
+      subscription.write(startMessage)
       extractor.emit('subscribed')
     })
   }
@@ -165,6 +198,10 @@ type Emitter = StrictEventEmitter<
   EventEmitter,
   {
     readonly 'event-extracted': StoredEvent
+    readonly 'last-stored-event-fetched': StoredEvent
+    readonly 'eventstore-connection-timeout': Error
+    readonly 'eventstore-read-error': Error
+    readonly 'eventstore-subscription-error': Error
     readonly subscribed: void
     readonly unsubscribed: void
   }
