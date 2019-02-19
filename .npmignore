@@ -1,8 +1,6 @@
 .github
 .vscode
 coverage
-dist/main/tests
-dist/module/tests
 pages
 src
 .babelrc
@@ -12,6 +10,7 @@ src
 .prettierignore
 jest.config.js
 jest.processor.js
+test.js
 tsconfig.json
 tsconfig.module.json
 tslint.json
