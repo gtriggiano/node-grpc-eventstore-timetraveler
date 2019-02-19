@@ -1,5 +1,5 @@
 // tslint:disable no-submodule-imports no-expression-statement no-if-statement
-import { DbStoredEvent } from '@gtriggiano/grpc-eventstore'
+import { StoredEvent } from '@gtriggiano/grpc-eventstore'
 import EventEmitter from 'eventemitter3'
 import { Either } from 'fp-ts/lib/Either'
 import StrictEventEmitter from 'strict-event-emitter-types'
@@ -11,7 +11,7 @@ export const Queue = ({
   ignoreProjectionErrorPredicate,
 }: QueueConfiguration): Queue => {
   // tslint:disable-next-line:readonly-array
-  const queuedEvents: DbStoredEvent[] = []
+  const queuedEvents: StoredEvent[] = []
 
   const state: InternalState = {
     isProcessing: false,
@@ -65,7 +65,7 @@ export const Queue = ({
   }
 
   const queue: Queue = Object.assign(new EventEmitter(), {
-    add: (event: DbStoredEvent) => {
+    add: (event: StoredEvent) => {
       const wasBelowHWM = queuedEvents.length < highWaterMark
       queuedEvents.push(event)
       const isOverHWM = queuedEvents.length >= highWaterMark
@@ -101,16 +101,16 @@ type Emitter = StrictEventEmitter<
     readonly drain: void
     readonly 'event-processing-error': {
       readonly error: Error
-      readonly event: DbStoredEvent
+      readonly event: StoredEvent
       readonly ignored: boolean
     }
-    readonly 'processed-event': DbStoredEvent
+    readonly 'processed-event': StoredEvent
   }
 >
 
 interface Queue extends Emitter {
-  readonly add: (event: DbStoredEvent) => Queue
-  readonly getLastProcessedEvent: () => null | DbStoredEvent
+  readonly add: (event: StoredEvent) => Queue
+  readonly getLastProcessedEvent: () => null | StoredEvent
   readonly getSize: () => number
   readonly start: () => Queue
   readonly stop: () => Queue
@@ -119,17 +119,17 @@ interface Queue extends Emitter {
 interface InternalState {
   // tslint:disable readonly-keyword
   isProcessing: boolean
-  lastProcessedEvent: null | DbStoredEvent
+  lastProcessedEvent: null | StoredEvent
   // tslint:enable readonly-keyword
 }
 
 export type EventProjectionHandler = (
-  event: DbStoredEvent
+  event: StoredEvent
 ) => EventProjectionResult | Promise<EventProjectionResult>
 export type EventProjectionResult = Either<Error, void>
 
 export type IngnoreEventProjectionHandlerErrorPredicate = (
-  event: DbStoredEvent,
+  event: StoredEvent,
   error: Error
 ) => boolean | Promise<boolean>
 

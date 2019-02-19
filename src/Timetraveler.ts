@@ -4,7 +4,7 @@ import { PathReporter } from 'io-ts/lib/PathReporter'
 import { cloneDeep, pick } from 'lodash'
 import StrictEventEmitter from 'strict-event-emitter-types'
 
-import { DbStoredEvent } from '@gtriggiano/grpc-eventstore'
+import { StoredEvent } from '@gtriggiano/grpc-eventstore'
 import { EventsExtractor } from './EventsExtractor'
 import {
   DEFAULT_TIMETRAVELER_CONFIGURATION,
@@ -157,19 +157,19 @@ export const Timetraveler = (settings: TimetravelerSettings): Timetraveler => {
   return traveler
 }
 
-const essentialEvent = (event: DbStoredEvent): EssentialEvent =>
+const essentialEvent = (event: StoredEvent): EssentialEvent =>
   pick(event, ['id', 'storedOn', 'name', 'stream'])
-type EssentialEvent = Pick<DbStoredEvent, 'id' | 'storedOn' | 'name' | 'stream'>
+type EssentialEvent = Pick<StoredEvent, 'id' | 'storedOn' | 'name' | 'stream'>
 
 type Emitter = StrictEventEmitter<
   EventEmitter,
   {
     readonly 'event-processing-error': {
       readonly error: Error
-      readonly event: DbStoredEvent
+      readonly event: StoredEvent
       readonly ignored: boolean
     }
-    readonly 'processed-event': DbStoredEvent
+    readonly 'processed-event': StoredEvent
     readonly 'state-update': InternalState
   }
 >

@@ -1,8 +1,8 @@
 // tslint:disable no-submodule-imports no-expression-statement no-if-statement
 import {
-  DbStoredEvent,
   EventStoreClient,
   Messages,
+  StoredEvent,
 } from '@gtriggiano/grpc-eventstore'
 import EventEmitter from 'eventemitter3'
 import StrictEventEmitter from 'strict-event-emitter-types'
@@ -38,7 +38,7 @@ export const EventsExtractor = ({
     }
   }
 
-  const onEventExtracted = (event: DbStoredEvent) => {
+  const onEventExtracted = (event: StoredEvent) => {
     if (!state.isStarted) return
     // tslint:disable-next-line:no-object-mutation
     state.lastExtractedEventId = event.id
@@ -63,7 +63,7 @@ export const EventsExtractor = ({
       }
 
       const request = new Messages.ReadStoreForwardRequest()
-      request.setFromEventId((state.lastExtractedEventId as unknown) as number)
+      request.setFromEventId(state.lastExtractedEventId)
       request.setLimit(extractionBatchSize)
 
       const call = eventStoreClient.readStoreForward(request)
@@ -71,10 +71,10 @@ export const EventsExtractor = ({
       // tslint:disable-next-line:no-let
       let numberOfExtractedEvents = 0
 
-      call.on('data', (event: Messages.StoredEvent) => {
-        const eventDTO = event.toObject()
+      call.on('data', (eventMessage: Messages.StoredEvent) => {
+        const event = eventMessage.toObject()
         numberOfExtractedEvents++
-        onEventExtracted((eventDTO as unknown) as DbStoredEvent)
+        onEventExtracted(event as StoredEvent)
       })
 
       call.on('end', () => {
@@ -109,14 +109,14 @@ export const EventsExtractor = ({
       }
 
       const request = new Messages.CatchUpWithStoreRequest()
-      request.setFromEventId((state.lastExtractedEventId as unknown) as number)
+      request.setFromEventId(state.lastExtractedEventId)
 
       const call = eventstoreClient.catchUpWithStore()
       call.write(request)
 
-      call.on('data', (event: Messages.StoredEvent) => {
-        const eventDTO = event.toObject()
-        onEventExtracted((eventDTO as unknown) as DbStoredEvent)
+      call.on('data', (eventMessage: Messages.StoredEvent) => {
+        const event = eventMessage.toObject()
+        onEventExtracted(event as StoredEvent)
       })
 
       call.on('error', () => {
@@ -164,7 +164,7 @@ export const EventsExtractor = ({
 type Emitter = StrictEventEmitter<
   EventEmitter,
   {
-    readonly 'event-extracted': DbStoredEvent
+    readonly 'event-extracted': StoredEvent
     readonly subscribed: void
     readonly unsubscribed: void
   }

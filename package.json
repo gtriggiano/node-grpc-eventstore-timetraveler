@@ -62,11 +62,11 @@
     "prepare-release": "One-step: clean, build, test, generate TypeDoc, and prepare a release"
   },
   "dependencies": {
-    "@gtriggiano/grpc-eventstore": "0.0.3",
+    "@gtriggiano/grpc-eventstore": "0.0.4-beta.0",
     "debug": "^4.1.1",
     "eventemitter3": "^3.1.0",
     "fp-ts": "^1.13.0",
-    "grpc": "^1.18.0",
+    "google-protobuf": "^3.6.1",
     "io-ts": "^1.8.2",
     "lodash": "^4.17.11",
     "strict-event-emitter-types": "^2.0.0"
@@ -75,13 +75,16 @@
     "@babel/core": "^7.2.0",
     "@babel/preset-env": "^7.2.0",
     "@types/debug": "^4.1.1",
+    "@types/google-protobuf": "^3.2.7",
     "@types/jest": "^23.3.10",
+    "@types/protobufjs": "^6.0.0",
     "babel-core": "7.0.0-bridge.0",
     "babel-jest": "^23.6.0",
     "codecov": "^3.1.0",
     "commitizen": "^3.0.4",
     "cz-conventional-changelog": "^2.1.0",
     "gh-pages": "^2.0.0",
+    "grpc": "^1.18.0",
     "istanbul": "^0.4.5",
     "jest": "^23.6.0",
     "jest-sourcemaps": "^1.0.1",
@@ -100,6 +103,9 @@
     "typedoc": "^0.13.0",
     "typescript": "^3.2.2",
     "watch": "^1.0.2"
+  },
+  "peerDependencies": {
+    "grpc": "^1.18.0"
   },
   "config": {
     "commitizen": {
