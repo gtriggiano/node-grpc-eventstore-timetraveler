@@ -74,7 +74,7 @@ export const Timetraveler = (settings: TimetravelerSettings): Timetraveler => {
   eventsExtractor.on('event-extracted', event => {
     // tslint:disable-next-line:no-object-mutation
     state.events.lastExtracted = essentialEvent(event)
-    queue.add(event)
+    queue.add(event).start()
     emitStateUpdate()
   })
 
@@ -156,6 +156,7 @@ export const Timetraveler = (settings: TimetravelerSettings): Timetraveler => {
       state.travelling
         ? traveler
         : (() => {
+            queue.start()
             eventsExtractor.start(
               (state.events.lastExtracted && state.events.lastExtracted.id) ||
                 startFromEventId

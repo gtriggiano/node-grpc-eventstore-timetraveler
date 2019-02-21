@@ -15,7 +15,7 @@ export const setupApplicationSocket = (
     'state-update',
     throttle(
       state => ioServer.sockets.emit('traveler-state-update', state),
-      250,
+      500,
       {
         leading: true,
         trailing: true,

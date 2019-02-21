@@ -44,7 +44,6 @@ export const EventsExtractor = ({
   }
 
   const onEventExtracted = (event: StoredEvent) => {
-    if (!state.isStarted) return
     // tslint:disable-next-line:no-object-mutation
     state.lastExtractedEventId = event.id
     extractor.emit('event-extracted', event)

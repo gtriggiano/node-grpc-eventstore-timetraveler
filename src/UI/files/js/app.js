@@ -37,7 +37,10 @@
     const $status = $('#controls .status')
     const $startStopCTA = $('#controls .start-stop-cta')
 
-    const $queueFiller = $('#queue .filler')
+    const $queue = $('#queue')
+    const $queueHWM = $queue.find('.hwm')
+    const $queueLWM = $queue.find('.lwm')
+    const $queueFiller = $queue.find('.filler')
     const $queueSize = $queueFiller.find('.size')
 
     const $processingError = $('#processing-error')
@@ -64,10 +67,28 @@
                 STATE.events.lastProcessed.storedOn
               )
             )
-            return duration.milliseconds() < 1000
+
+            return duration.as('seconds') < 1
               ? '0 seconds'
               : duration.humanize()
           })()
+
+        const queueScale = STATE.queue.hwm + STATE.queue.lwm
+        const queueLWMPercentOnScale = STATE.queue.lwm / queueScale
+        const queueHWMPercentOnScale = STATE.queue.hwm / queueScale
+        const queueFillerPercentOnScale = Math.min(
+          STATE.queue.size / queueScale,
+          1
+        )
+        const hue =
+          STATE.queue.size < STATE.queue.lwm
+            ? 120
+            : STATE.queue.size > STATE.queue.hwm
+            ? 0
+            : 120 -
+              ((STATE.queue.size - STATE.queue.lwm) /
+                (STATE.queue.hwm - STATE.queue.lwm)) *
+                120
 
         // Last Extracted Event Stored On
         const LEESO =
@@ -98,7 +119,21 @@
         $startStopCTA.text(STATE.travelling ? 'Stop' : 'Start')
         $leeso.text(LEESO)
         $lpeso.text(LPESO)
-        $queueSize.text(STATE.queue.size)
+
+        $queueLWM
+          .css({ bottom: queueLWMPercentOnScale * 100 + '%' })
+          .text(STATE.queue.lwm)
+        $queueHWM
+          .css({ bottom: queueHWMPercentOnScale * 100 + '%' })
+          .text(STATE.queue.hwm)
+        $queueFiller.css({
+          height: queueFillerPercentOnScale * 100 + '%',
+          backgroundColor: 'hsl(' + hue + ', 100%, 30%)',
+        })
+
+        $queueSize.text(STATE.queue.size).css({
+          backgroundColor: 'hsl(' + hue + ', 100%, 30%)',
+        })
 
         if (STOPPED_ON_ERROR) {
           $processingError.show()

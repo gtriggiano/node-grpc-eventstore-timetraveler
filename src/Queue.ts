@@ -70,7 +70,7 @@ export const Queue = ({
       queuedEvents.push(event)
       const isOverHWM = queuedEvents.length >= highWaterMark
       if (wasBelowHWM && isOverHWM) queue.emit('HWM')
-      return queue.start()
+      return queue
     },
     getLastProcessedEvent: () => state.lastProcessedEvent,
     getSize: () => queuedEvents.length,
